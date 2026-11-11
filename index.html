@@ -7,21 +7,33 @@
 <title>XYZ Labs Trader Dashboard</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: account-metrics app — left nav, top account bar, chart + account card, objectives, journal, funded rules, first-payout notes. Single dark look by choice. */
+/* Layout: account-metrics app — left nav, top account bar, chart + account card, objectives, journal, funded rules, first-payout notes. Dark by default, light mode via the top-bar toggle (data-mode on html). */
 :root{
   color-scheme: dark;
   --bg:#08090F; --side:#0C0E18; --panel:#111426; --panel-2:#171A31; --line:#232744; --line-soft:#1A1D35;
   --fg:#ECEDF8; --muted:#979DC4; --dim:#7A80AA;
   --accent:#9D7BFF; --accent-soft:#251D4F; --data:#5FD3F3;
   --good:#3DDC97; --good-soft:#0F3527; --warn:#F5B84A; --warn-soft:#382A0E; --bad:#FF6B7A; --bad-soft:#3A1520;
-  --f-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --on-accent:#0B0820; --dot-off:#3A3F62; --out:#3E4366;
+  --f-display:"Inter",system-ui,-apple-system,sans-serif;
   --f-body:"Inter",system-ui,-apple-system,sans-serif;
-  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --f-mono:"Inter",system-ui,-apple-system,sans-serif;
 }
+:root[data-mode="light"]{
+  color-scheme: light;
+  --bg:#F3F4F9; --side:#FFFFFF; --panel:#FFFFFF; --panel-2:#F0F1F7; --line:#D9DCEA; --line-soft:#E7E9F2;
+  --fg:#151729; --muted:#565C80; --dim:#6A7092;
+  --accent:#6D4AE0; --accent-soft:#EEE8FF; --data:#0B7FA3;
+  --good:#0F8A57; --good-soft:#DFF5EA; --warn:#9A6200; --warn-soft:#FFF2D9; --bad:#D3364A; --bad-soft:#FCE6E9;
+  --on-accent:#FFFFFF; --dot-off:#C7CADB; --out:#B3B7CC;
+}
+.mode-btn{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font:500 13px var(--f-body);cursor:pointer}
+.mode-btn:hover{border-color:var(--accent)}
+.mode-btn span{display:inline-flex}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5;font-feature-settings:"cv11","ss01"}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--side)}
 .app{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
@@ -33,10 +45,10 @@ h2{font-size:17px;font-weight:600}
 .side{background:var(--side);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:22px;
   position:sticky;top:0;height:100vh}
 .brand{display:flex;align-items:center;gap:10px;padding:0 6px}
-.brand-mark{width:30px;height:30px;border-radius:8px;background:var(--accent-soft);border:1px solid var(--accent);display:grid;place-items:center}
+.brand-mark{width:30px;height:30px;border-radius:8px;background:var(--accent-soft);border:1px solid var(--accent);display:grid;place-items:center;color:var(--accent)}
 .brand b{font-family:var(--f-display);font-size:20px;font-weight:700}
 .brand b span{color:var(--accent)}
-.new-btn{display:block;text-align:center;background:var(--accent);color:#0B0820;font-weight:600;text-decoration:none;border-radius:8px;padding:11px 12px}
+.new-btn{display:block;text-align:center;background:var(--accent);color:var(--on-accent);font-weight:600;text-decoration:none;border-radius:8px;padding:11px 12px}
 .nav{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
 .nav a{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;color:var(--muted);text-decoration:none;font-weight:500}
 .nav a:hover{background:var(--panel);color:var(--fg)}
@@ -103,13 +115,36 @@ td.note{white-space:normal;color:var(--muted);min-width:200px}
 .rules h3{font-size:15px;font-weight:600}
 .rules p{margin:2px 0 0;font-size:13px;color:var(--muted)}
 
+.view{display:flex;flex-direction:column;gap:22px}
+.plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.plan{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:22px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.plan.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 0 24px -8px var(--accent)}
+.plan .size{font-family:var(--f-display);font-size:30px;font-weight:700;letter-spacing:-.01em}
+.plan .size small{display:block;font-family:var(--f-mono);font-size:11.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.plan .price{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:26px;font-weight:600;color:var(--accent)}
+.plan .price span{font-size:13px;color:var(--muted);font-weight:500;margin-left:4px}
+.plan dl{margin:0;display:flex;flex-direction:column}
+.plan dl div{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line-soft);font-size:13.5px}
+.plan dt{color:var(--muted)} .plan dd{margin:0;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:500}
+.plan button{min-height:44px;border-radius:9px;border:1px solid var(--accent);background:transparent;color:var(--fg);font:600 14px var(--f-body);cursor:pointer}
+.plan button:hover,.plan.sel button{background:var(--accent);color:var(--on-accent)}
+.plan-msg{margin:14px 0 0;font-size:13px;color:var(--muted)}
+.rule-chips{display:flex;flex-wrap:wrap;gap:8px}
+.rule-chips span{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--muted)}
+.rule-chips b{color:var(--fg);font-family:var(--f-mono);font-weight:600;margin-left:4px}
+@media (max-width:860px){.plans{grid-template-columns:minmax(0,1fr)}}
+.use{display:flex;align-items:center;gap:10px;min-width:220px}
+.ubar{flex:1;height:8px;border-radius:4px;background:var(--panel-2);border:1px solid var(--line-soft);overflow:hidden}
+.ubar span{display:block;height:100%;min-width:3px;border-radius:4px;background:var(--good)}
+.use small{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:12px;color:var(--muted);white-space:nowrap}
+
 /* rule visuals */
 .steps{list-style:none;margin:10px 0 6px;padding:0;display:flex;max-width:520px}
 .steps li{flex:1;position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .steps li:not(:last-child)::after{content:"";position:absolute;top:5px;left:16px;right:4px;height:2px;
   background:repeating-linear-gradient(90deg,var(--line) 0 6px,transparent 6px 10px)}
 .steps li:last-child{flex:0 0 auto}
-.steps i{width:12px;height:12px;border-radius:50%;background:#3A3F62;display:block;position:relative;z-index:1}
+.steps i{width:12px;height:12px;border-radius:50%;background:var(--dot-off);display:block;position:relative;z-index:1}
 .steps li.on i{background:var(--good);box-shadow:0 0 0 4px var(--good-soft),0 0 10px var(--good)}
 .steps span{font-family:var(--f-mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
 .steps li.on span{color:var(--good);font-weight:600}
@@ -141,8 +176,8 @@ td.note{white-space:normal;color:var(--muted);min-width:200px}
   background:transparent;color:var(--fg);font:inherit;text-align:left}
 .cal > :nth-child(7n){border-right:0}
 .cell .dn{font-size:13px;font-weight:600;color:var(--muted);width:26px;height:26px;display:grid;place-items:center;border-radius:50%}
-.cell.out .dn{color:#3E4366}
-.cell.today .dn{background:var(--accent);color:#0B0820}
+.cell.out .dn{color:var(--out)}
+.cell.today .dn{background:var(--accent);color:var(--on-accent)}
 button.cell{cursor:pointer}
 button.cell:hover{background:var(--panel-2)}
 button.cell.sel{background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--accent)}
@@ -175,10 +210,10 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 <div class="app">
   <aside class="side">
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9D7BFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
+      <div class="brand-mark" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
       <b>XYZ <span>Labs</span></b>
     </div>
-    <a class="new-btn" href="#overview">New Challenge</a>
+    <a class="new-btn" href="#challenge">New Challenge</a>
     <ul class="nav">
       <li><a class="cur" href="#overview"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Account Overview</a></li>
       <li><a href="#journal"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M9 10h6M9 14h6M9 18h4"/></svg>Trading Journal</a></li>
@@ -190,16 +225,17 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
   <main class="main">
     <div class="topbar">
       <div class="acct">
-        <div class="brand-mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9D7BFF" stroke-width="2.6" stroke-linecap="round"><path d="M12 3v18M3 12h18"/></svg></div>
+        <div class="brand-mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 3v18M3 12h18"/></svg></div>
         <div><b>New Mode · $10,000</b><small>Crypto · USDT pairs · #FX-20419</small></div>
       </div>
-      <div class="user"><span>Demo Trader</span><span class="avatar">DT</span></div>
+      <div class="user"><button type="button" class="mode-btn" id="modeBtn" aria-label="Switch to light mode"><span id="icSun"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span><span id="icMoon" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span><span id="modeTxt">Light mode</span></button><span>Demo Trader</span><span class="avatar">DT</span></div>
     </div>
 
     <div class="content">
       <p class="demo-note">Demo account with simulated trades, for internal review.</p>
 
-      <section class="top-grid" id="overview">
+      <div class="view" data-view="overview">
+      <section class="top-grid">
         <div class="panel">
           <div class="tiles">
             <div class="tile"><span>Balance</span><b id="tBal">–</b></div>
@@ -217,6 +253,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
             <div class="row"><dt>Funded since</dt><dd class="mono">02/11/26</dd></div>
             <div class="row"><dt>Profit share</dt><dd>70%</dd></div>
             <div class="row"><dt>Payouts made</dt><dd class="mono">0</dd></div>
+            <div class="row"><dt>Buffer kept (1%)</dt><dd class="mono">$100.00</dd></div>
             <div class="row"><dt>Available to withdraw</dt><dd class="mono pos" id="iAvail">–</dd></div>
             <div class="row"><dt>Your share (70%)</dt><dd class="mono" id="iShare">–</dd></div>
           </dl>
@@ -224,13 +261,13 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
       </section>
 
       <section class="panel">
-        <div class="head"><h2>Objectives</h2><span class="sub">Checked on every trade</span></div>
+        <div class="head"><h2>Objectives</h2><span class="sub">Checked on equity, including open positions</span></div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Objective</th><th class="num">Limit</th><th class="num">Your result</th><th>Status</th></tr></thead>
+            <thead><tr><th>Objective</th><th>Drawdown balance</th><th>Result record</th><th>Status</th></tr></thead>
             <tbody>
-              <tr><td>Max daily loss · 3%</td><td class="num">−$300.00</td><td class="num" id="oDay">–</td><td><span class="badge ok">Passing</span></td></tr>
-              <tr><td>Maximum loss · 6%</td><td class="num">Floor $9,400.00</td><td class="num" id="oMin">–</td><td><span class="badge ok">Passing</span></td></tr>
+              <tr><td>Max daily loss · 3%</td><td><div class="use"><div class="ubar"><span id="cDay"></span></div><small id="cDayT">–</small></div></td><td><div class="use"><div class="ubar"><span id="uDay"></span></div><small id="uDayT">–</small></div></td><td><span class="badge ok">Active</span></td></tr>
+              <tr><td>Maximum loss · 6%</td><td><div class="use"><div class="ubar"><span id="cMax"></span></div><small id="cMaxT">–</small></div></td><td><div class="use"><div class="ubar"><span id="uMax"></span></div><small id="uMaxT">–</small></div></td><td><span class="badge ok">Active</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -256,7 +293,10 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
         </div>
       </section>
 
-      <section class="panel" id="rules">
+      </div>
+
+      <div class="view" data-view="rules" hidden>
+      <section class="panel">
         <div class="head"><h2>Funded account rules</h2><span class="sub">Your progress on this account</span></div>
         <ul class="rules">
           <li><span class="n">1</span><div><h3>Drawdown floor locks after 1st payout</h3><p>Max-loss floor moves up to your starting balance ($10,000) and stays there.</p></div><span class="badge wait">Waiting for 1st payout</span></li>
@@ -271,35 +311,55 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
           <li><span class="n">3</span><div><h3>Reach 30% profit, daily loss limit widens to 5%</h3><p id="r3">–</p><div class="rbar"><span id="r3bar"></span></div></div><span class="badge wait">Locked</span></li>
           <li><span class="n">4</span><div><h3>Failed? Reset at 10% off within 3 days</h3><p>Restart straight on a funded account, no evaluation. All benefits reset.</p></div></li>
           <li><span class="n">5</span><div><h3>No breach for 4 months = Squad Leader</h3><p>Extra rewards in competitions. Reset accounts need 6 months. You are at 0.3 of 4 months.</p></div><span class="badge gold">0.3 / 4 months</span></li>
+          <li><span class="n">6</span><div><h3>Keep a 1% buffer when you withdraw</h3><p>1% of your account size always stays in the account. Example: $10,000 account with $500 profit → you can withdraw $400. Minimum withdrawal 100 USDT, paid weekly.</p></div><span class="badge acc">$100 buffer</span></li>
         </ul>
       </section>
 
-      <section class="panel" id="payout">
-        <div class="head"><h2>First payout</h2><span class="sub">What changes, and what we still need to decide</span></div>
+      </div>
+
+      <div class="view" data-view="payout" hidden>
+      <section class="panel">
+        <div class="head"><h2>First payout</h2><span class="sub">What changes when you withdraw</span></div>
         <div class="fp">
           <div>
             <h3>What happens on the 1st payout</h3>
             <ul>
-              <li>Profit is paid at 70%.<span id="fpEx">–</span></li>
+              <li>Profit minus the 1% buffer is paid at 70%.<span id="fpEx">–</span></li>
               <li>The max-loss floor moves from $9,400 to $10,000 and never moves back down.</li>
               <li>The payout counts as 1 of 4 toward the 75% profit share.</li>
+              <li>Paid weekly, minimum 100 USDT per withdrawal.</li>
               <li>Paid-out profit still counts toward the 30% target for the wider daily loss limit.</li>
             </ul>
           </div>
           <div>
-            <h3>To confirm</h3>
+            <h3>Payout rules</h3>
             <ol>
-              <li>Zero buffer after a full withdrawal<span>If the trader withdraws all profit, balance = floor = $10,000, so any loss next day ends the account. Keep a minimum in the account, or lock the floor a little lower?</span></li>
-              <li>When can the 1st payout be requested?<span>Any minimum trading days, minimum profit, or waiting period after funding?</span></li>
-              <li>How often can traders request payouts?<span>On demand, weekly, or every 14 days. This decides how fast traders reach 90%.</span></li>
-              <li>Does the 30% profit include paid-out profit?<span>This dashboard assumes yes.</span></li>
-              <li>Floor check uses balance or equity?<span>Open positions in loss could breach the floor before they close.</span></li>
+              <li>Daily loss works together with the floor<span>The most you can lose in a day is the smaller of 3% ($300) or your balance above the $10,000 floor. Balance $10,100 → you can lose up to $100. Balance $10,400 → you can lose up to $300.</span></li>
+              <li>Request your 1st payout any time<span>No minimum trading days, no waiting period after funding, no minimum profit. Minimum withdrawal is 100 USDT, counted before the profit split.</span></li>
+              <li>Weekly payouts<span>Payouts are processed once a week.</span></li>
+              <li>Paid-out profit counts toward 30%<span>Profit you have already withdrawn still counts toward unlocking the 5% daily loss limit.</span></li>
+              <li>Floating losses count<span>Limits are checked on equity. If an open position's loss takes equity to the floor, the account breaches before the trade closes.</span></li>
             </ol>
           </div>
         </div>
       </section>
 
-      <div class="callout"><b>Biggest open point:</b> the zero-buffer issue in item 1. It decides whether the floor lock protects traders or ends accounts right after their first payout.</div>
+      <div class="callout"><b>Example:</b> after your 1st payout on a $10,000 account, your balance is $10,100. Today you can lose at most $100. Make $300 more, and tomorrow you can use the full $300 daily limit.</div>
+      </div>
+
+      <div class="view" data-view="challenge" hidden>
+        <section class="panel">
+          <div class="head"><h2>New Challenge</h2><span class="sub">New Mode · one-time fee in USDT</span></div>
+          <div class="plans" id="plans"></div>
+          <p class="plan-msg" id="planMsg" role="status" aria-live="polite">Pick an account size to start.</p>
+        </section>
+        <section class="panel">
+          <div class="head"><h2>Same rules on every size</h2></div>
+          <div class="rule-chips">
+            <span>One-day pass <b>No minimum trading days</b></span><span>Profit target <b>6%</b></span><span>Max daily loss <b>3%</b></span><span>Maximum loss <b>6%</b></span><span>Profit share <b>70% → 90%</b></span><span>Withdrawals keep <b>1% buffer</b></span><span>Payouts <b>Weekly</b></span><span>Floor locks after 1st payout</span><span>Reset at 10% off within 3 days</span>
+          </div>
+        </section>
+      </div>
     </div>
   </main>
 </div>
@@ -343,12 +403,21 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 
   $('tBal').textContent=money(bal); $('tEq').textContent=money(bal);
   $('tProf').textContent=sgn(profit)+' ('+(profit/START*100).toFixed(2)+'%)';
-  $('iAvail').textContent=money(profit); $('iShare').textContent=money(profit*0.7);
-  $('oDay').textContent = worst<0 ? money(worst)+' (worst day)' : 'No losing day';
-  $('oMin').textContent = 'Lowest '+money(minBal);
+  const BUF=START*0.01, avail=Math.max(0,profit-BUF);
+  $('iAvail').textContent=money(avail); $('iShare').textContent=money(avail*0.7);
+  const barColor=f=>f>=0.8?'var(--bad)':f>=0.5?'var(--warn)':'var(--good)';
+  const setUse=(id,used,lim)=>{const f=Math.max(0,used)/lim, s=$(id);
+    s.style.width=(Math.min(1,f)*100).toFixed(1)+'%'; s.style.background=barColor(f);
+    $(id+'T').textContent=money(-Math.max(0,used))+' / $'+lim;};
+  // drawdown now: today (11 Nov) and current balance below start
+  setUse('cDay', -(days['11 Nov']||0), 300);
+  setUse('cMax', START-bal, 600);
+  // record: worst day and lowest balance so far
+  setUse('uDay', -worst, 300);
+  setUse('uMax', START-minBal, 600);
   $('r3').textContent='Total profit '+money(profit)+' of $3,000 needed ('+(profit/3000*100).toFixed(0)+'%).';
   $('r3bar').style.width=Math.min(100,profit/3000*100).toFixed(1)+'%';
-  $('fpEx').textContent='Today: '+money(profit)+' available → '+money(profit*0.7)+' to the trader.';
+  $('fpEx').textContent='Today: '+money(profit)+' profit − $100 buffer = '+money(avail)+' to withdraw → '+money(avail*0.7)+' to the trader.';
 
   // journal calendar (all sample trades are in November 2026)
   const DATA_Y=2026, DATA_M=10, TODAY=11;
@@ -403,26 +472,65 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
   let lo=Math.min(...vals),hi=Math.max(...vals); const sp=hi-lo; lo-=sp*0.08; hi+=sp*0.08;
   const n=curve.length-1;
   const x=i=>pL+(W-pL-pR)*i/n, y=v=>pT+(H-pT-pB)*(1-(v-lo)/(hi-lo));
-  const font='font-family="JetBrains Mono, monospace" font-size="11"';
+  const font='font-family="Inter, system-ui, sans-serif" font-size="11" font-variant-numeric="tabular-nums"';
   let g='';
   const step=Math.ceil((hi-lo)/5/100)*100;
   for(let v=Math.ceil(lo/step)*step; v<=hi; v+=step){ const yy=y(v).toFixed(1);
-    g+='<line x1="'+pL+'" x2="'+(W-pR)+'" y1="'+yy+'" y2="'+yy+'" stroke="#1A1D35"/>';
-    g+='<text x="'+(pL-8)+'" y="'+(+yy+4)+'" text-anchor="end" fill="#7A80AA" '+font+'>$'+v.toLocaleString('en-US')+'</text>'; }
+    g+='<line x1="'+pL+'" x2="'+(W-pR)+'" y1="'+yy+'" y2="'+yy+'" style="stroke:var(--line-soft)"/>';
+    g+='<text x="'+(pL-8)+'" y="'+(+yy+4)+'" text-anchor="end" style="fill:var(--dim)" '+font+'>$'+v.toLocaleString('en-US')+'</text>'; }
   const ref=(v,c,lab)=>{const yy=y(v).toFixed(1);
-    return '<line x1="'+pL+'" x2="'+(W-pR)+'" y1="'+yy+'" y2="'+yy+'" stroke="'+c+'" stroke-width="1.4" stroke-dasharray="5 5"/>'+
-      '<text x="'+(W-pR-4)+'" y="'+(+yy-6)+'" text-anchor="end" fill="'+c+'" '+font+'>'+lab+'</text>';};
-  g+=ref(START,'#979DC4','Account size $10,000');
-  g+=ref(FLOOR,'#FF6B7A','Max-loss floor $9,400');
+    return '<line x1="'+pL+'" x2="'+(W-pR)+'" y1="'+yy+'" y2="'+yy+'" style="stroke:'+c+'" stroke-width="1.4" stroke-dasharray="5 5"/>'+
+      '<text x="'+(W-pR-4)+'" y="'+(+yy-6)+'" text-anchor="end" style="fill:'+c+'" '+font+'>'+lab+'</text>';};
+  g+=ref(START,'var(--muted)','Account size $10,000');
+  g+=ref(FLOOR,'var(--bad)','Max-loss floor $9,400');
   const pts=curve.map((p,i)=>x(i).toFixed(1)+','+y(p.b).toFixed(1));
   const baseY=y(START).toFixed(1);
-  g+='<defs><linearGradient id="ga" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3DDC97" stop-opacity=".35"/><stop offset="1" stop-color="#3DDC97" stop-opacity=".04"/></linearGradient></defs>';
+  g+='<defs><linearGradient id="ga" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style="stop-color:var(--good)" stop-opacity=".35"/><stop offset="1" style="stop-color:var(--good)" stop-opacity=".04"/></linearGradient></defs>';
   g+='<path d="M'+x(0).toFixed(1)+','+baseY+' L'+pts.join(' L')+' L'+x(n).toFixed(1)+','+baseY+' Z" fill="url(#ga)"/>';
-  g+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="#3DDC97" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
-  g+='<circle cx="'+x(n).toFixed(1)+'" cy="'+y(bal).toFixed(1)+'" r="8" fill="#3DDC97" fill-opacity=".2"/><circle cx="'+x(n).toFixed(1)+'" cy="'+y(bal).toFixed(1)+'" r="4" fill="#3DDC97"/>';
-  g+='<text x="'+pL+'" y="'+(H-10)+'" fill="#7A80AA" '+font+'>02 Nov</text>';
-  g+='<text x="'+(W-pR)+'" y="'+(H-10)+'" text-anchor="end" fill="#7A80AA" '+font+'>10 Nov</text>';
+  g+='<polyline points="'+pts.join(' ')+'" fill="none" style="stroke:var(--good)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
+  g+='<circle cx="'+x(n).toFixed(1)+'" cy="'+y(bal).toFixed(1)+'" r="8" style="fill:var(--good)" fill-opacity=".2"/><circle cx="'+x(n).toFixed(1)+'" cy="'+y(bal).toFixed(1)+'" r="4" style="fill:var(--good)"/>';
+  g+='<text x="'+pL+'" y="'+(H-10)+'" style="fill:var(--dim)" '+font+'>02 Nov</text>';
+  g+='<text x="'+(W-pR)+'" y="'+(H-10)+'" text-anchor="end" style="fill:var(--dim)" '+font+'>10 Nov</text>';
   $('chart').innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Balance after each trade, from $10,000 to '+money(bal)+'">'+g+'</svg>';
+
+  // light / dark mode (remembered per viewer)
+  function setMode(m){
+    const l = m==='light';
+    if(l) document.documentElement.setAttribute('data-mode','light'); else document.documentElement.removeAttribute('data-mode');
+    $('modeTxt').textContent = l ? 'Dark mode' : 'Light mode';
+    $('modeBtn').setAttribute('aria-label', l ? 'Switch to dark mode' : 'Switch to light mode');
+    $('icSun').hidden = l; $('icMoon').hidden = !l;
+  }
+  let mode='dark'; try{ mode = localStorage.getItem('xyz-mode') || 'dark'; }catch(e){}
+  setMode(mode);
+  $('modeBtn').addEventListener('click',()=>{ mode = mode==='light' ? 'dark' : 'light'; setMode(mode); try{ localStorage.setItem('xyz-mode',mode); }catch(e){} });
+
+  // pages: #overview (with #journal), #rules, #payout
+  // challenge plans
+  const PLANS=[[5000,180],[10000,360],[25000,900]];
+  const usd=n=>'$'+n.toLocaleString('en-US');
+  $('plans').innerHTML=PLANS.map(([s,p])=>'<article class="plan" data-size="'+s+'">'+
+    '<div class="size"><small>Account size</small>'+usd(s)+'</div>'+
+    '<div class="price">'+p+'<span>USDT</span></div>'+
+    '<dl><div><dt>Profit target 6%</dt><dd>'+usd(s*0.06)+'</dd></div>'+
+    '<div><dt>Max daily loss 3%</dt><dd>'+usd(s*0.03)+'</dd></div>'+
+    '<div><dt>Maximum loss 6%</dt><dd>'+usd(s*0.06)+'</dd></div>'+
+    '<div><dt>Profit share</dt><dd>70% → 90%</dd></div></dl>'+
+    '<button type="button">Start '+usd(s)+' challenge</button></article>').join('');
+  $('plans').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; const card=b.closest('.plan');
+    document.querySelectorAll('.plan').forEach(c=>c.classList.toggle('sel',c===card));
+    const s=+card.dataset.size, p=PLANS.find(x=>x[0]===s)[1];
+    $('planMsg').textContent='Selected '+usd(s)+' account for '+p+' USDT. Checkout is not connected in this demo.';});
+
+  const VIEWS={overview:'overview',journal:'overview',rules:'rules',payout:'payout',challenge:'challenge'};
+  function route(){
+    const h=location.hash.slice(1), key=VIEWS[h]?h:'overview', v=VIEWS[key];
+    document.querySelectorAll('.view').forEach(el=>{el.hidden=el.dataset.view!==v;});
+    document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('cur',a.getAttribute('href')==='#'+key));
+    if(key==='journal'){const j=document.getElementById('journal'); if(j) j.scrollIntoView();} else window.scrollTo(0,0);
+  }
+  window.addEventListener('hashchange',route);
+  route();
 })();
 </script>
 </body>
