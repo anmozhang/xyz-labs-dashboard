@@ -33,6 +33,7 @@
 .mode-btn:hover{border-color:var(--accent)}
 .mode-btn span{display:inline-flex}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5;font-feature-settings:"cv11","ss01"}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--side)}
 .app{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}
@@ -62,6 +63,34 @@ h2{font-size:17px;font-weight:600}
 .acct{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px}
 .acct b{display:block;font-family:var(--f-display);font-size:15px}
 .acct small{color:var(--muted);font-size:12px}
+.accts{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+.acct.failed{border-color:color-mix(in srgb,var(--bad) 45%,var(--line))}
+.brand-mark.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+button.brand-mark{padding:0;cursor:pointer;flex:none}
+button.brand-mark:hover{box-shadow:0 0 0 3px var(--accent-soft)}
+.acct .badge{margin-left:6px;font-size:11px;padding:2px 8px;vertical-align:2px;font-family:var(--f-body)}
+.badge.bad{background:var(--bad-soft);color:var(--bad)}
+.badge.wait{background:var(--panel-2);color:var(--muted)}
+button.acct{font:inherit;color:var(--fg);text-align:left;cursor:pointer}
+.acct-txt{background:none;border:0;padding:0;font:inherit;color:var(--fg);text-align:left;cursor:pointer}
+.acct-txt b{display:block;font-family:var(--f-display);font-size:15px}
+.acct-txt small{color:var(--muted);font-size:12px}
+.acct.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.warn-txt{color:var(--warn)}
+.reset-btn{min-height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--bad);background:transparent;color:var(--bad);font:600 13px var(--f-body);cursor:pointer;white-space:nowrap}
+.reset-btn:hover{background:var(--bad);color:#fff}
+.overlay{position:fixed;inset:0;z-index:20;background:rgba(5,6,12,.6);display:grid;place-items:center;padding:16px}
+.dialog{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;width:100%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+.dialog h2{font-size:19px;margin-bottom:8px}
+.dialog .sub{margin:0}
+.bill{margin:18px 0 12px;display:flex;flex-direction:column}
+.bill div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line-soft);font-variant-numeric:tabular-nums}
+.bill dt{color:var(--muted)} .bill dd{margin:0;font-weight:600}
+.bill .total dt{color:var(--fg);font-weight:600} .bill .total dd{font-size:20px}
+.deadline{font-size:12.5px;color:var(--warn);margin:0 0 18px}
+.dlg-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:16px}
+.btn-primary{min-height:44px;padding:0 16px;border-radius:9px;border:0;background:var(--accent);color:var(--on-accent);font:600 14px var(--f-body);cursor:pointer}
+.btn-ghost{min-height:44px;padding:0 16px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--fg);font:600 14px var(--f-body);cursor:pointer}
 .user{display:flex;align-items:center;gap:10px;color:var(--muted)}
 .avatar{width:34px;height:34px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:600;font-size:13px}
 .content{padding-block:22px 56px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));
@@ -224,9 +253,36 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 
   <main class="main">
     <div class="topbar">
-      <div class="acct">
+      <div class="accts">
+      <button type="button" class="acct sel" id="mainAcct" data-acct="main" aria-label="Show account #FX-20419">
         <div class="brand-mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 3v18M3 12h18"/></svg></div>
         <div><b>New Mode · $10,000</b><small>Crypto · USDT pairs · #FX-20419</small></div>
+      </button>
+      <div class="acct failed" id="failedAcct">
+        <button type="button" class="brand-mark bad" id="fIcon" aria-label="Set this account back to failed (demo)" title="Set back to failed (demo)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+        <button type="button" class="acct-txt" data-acct="failed" aria-label="Show account #FX-20388"><b>New Mode · $5,000 <span class="badge bad" id="fBadge">Failed</span></b><small id="fSub">#FX-20388 · Max daily loss hit 09 Nov</small></button>
+        <button type="button" class="reset-btn" id="resetBtn">Reset · 10% off</button>
+      </div>
+      </div>
+      <div class="overlay" id="resetDlg" hidden>
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="rdTitle">
+          <div id="rdForm">
+            <h2 id="rdTitle">Reset failed account</h2>
+            <p class="sub">#FX-20388 · New Mode · $5,000. You restart straight on a funded account, no evaluation. All benefits reset, and Squad Leader needs 6 months.</p>
+            <dl class="bill">
+              <div><dt>Original price</dt><dd>180.00 USDT</dd></div>
+              <div><dt>Reset discount (10% off)</dt><dd class="pos">−18.00 USDT</dd></div>
+              <div class="total"><dt>You pay</dt><dd>162.00 USDT</dd></div>
+            </dl>
+            <p class="deadline">Offer ends 12 Nov, 21:40 (3 days after the breach).</p>
+            <div class="dlg-actions"><button type="button" class="btn-ghost" id="rdCancel">Cancel</button><button type="button" class="btn-primary" id="rdPay">Pay 162 USDT and reset</button></div>
+          </div>
+          <div id="rdDone" hidden>
+            <h2>Account reset</h2>
+            <p class="sub">Demo only, payment is not connected. In the live version, #FX-20388 restarts as a funded $5,000 account with profit share back at 70%.</p>
+            <div class="dlg-actions"><button type="button" class="btn-primary" id="rdClose">Done</button></div>
+          </div>
+        </div>
       </div>
       <div class="user"><button type="button" class="mode-btn" id="modeBtn" aria-label="Switch to light mode"><span id="icSun"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span><span id="icMoon" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span><span id="modeTxt">Light mode</span></button><span>Demo Trader</span><span class="avatar">DT</span></div>
     </div>
@@ -246,16 +302,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
         </div>
 
         <div class="panel info">
-          <dl>
-            <div class="row"><dt>Status</dt><dd><span class="badge ok">Funded · Active</span></dd></div>
-            <div class="row"><dt>Mode</dt><dd>New Mode</dd></div>
-            <div class="row"><dt>Account size</dt><dd class="mono">$10,000.00</dd></div>
-            <div class="row"><dt>Funded since</dt><dd class="mono">02/11/26</dd></div>
-            <div class="row"><dt>Profit share</dt><dd>70%</dd></div>
-            <div class="row"><dt>Payouts made</dt><dd class="mono">0</dd></div>
-            <div class="row"><dt>Buffer kept (1%)</dt><dd class="mono">$100.00</dd></div>
-            <div class="row"><dt>Available to withdraw</dt><dd class="mono pos" id="iAvail">–</dd></div>
-            <div class="row"><dt>Your share (70%)</dt><dd class="mono" id="iShare">–</dd></div>
+          <dl id="info">
           </dl>
         </div>
       </section>
@@ -266,8 +313,8 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
           <table>
             <thead><tr><th>Objective</th><th>Drawdown balance</th><th>Result record</th><th>Status</th></tr></thead>
             <tbody>
-              <tr><td>Max daily loss · 3%</td><td><div class="use"><div class="ubar"><span id="cDay"></span></div><small id="cDayT">–</small></div></td><td><div class="use"><div class="ubar"><span id="uDay"></span></div><small id="uDayT">–</small></div></td><td><span class="badge ok">Active</span></td></tr>
-              <tr><td>Maximum loss · 6%</td><td><div class="use"><div class="ubar"><span id="cMax"></span></div><small id="cMaxT">–</small></div></td><td><div class="use"><div class="ubar"><span id="uMax"></span></div><small id="uMaxT">–</small></div></td><td><span class="badge ok">Active</span></td></tr>
+              <tr><td id="oDayL">Max daily loss · 3%</td><td><div class="use"><div class="ubar"><span id="cDay"></span></div><small id="cDayT">–</small></div></td><td><div class="use"><div class="ubar"><span id="uDay"></span></div><small id="uDayT">–</small></div></td><td><span class="badge ok" id="oDayS">Active</span></td></tr>
+              <tr><td id="oMaxL">Maximum loss · 6%</td><td><div class="use"><div class="ubar"><span id="cMax"></span></div><small id="cMaxT">–</small></div></td><td><div class="use"><div class="ubar"><span id="uMax"></span></div><small id="uMaxT">–</small></div></td><td><span class="badge ok" id="oMaxS">Active</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -366,9 +413,8 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 
 <script>
 (function(){
-  const START = 10000, FLOOR = 9400;
   // [open, close, pair, side, size, entry, exit, setup, note]
-  const T = [
+  const T_MAIN = [
     ['02 Nov 09:14','02 Nov 11:02','BTC/USDT','Buy',0.20,68420,69180,'Breakout retest','Waited for the 1h close above 68.3k. Clean entry.'],
     ['02 Nov 14:30','02 Nov 16:05','ETH/USDT','Sell',2.0,3512,3488,'Range fade','Sold the top of the Asia range.'],
     ['03 Nov 10:02','03 Nov 10:47','SOL/USDT','Buy',25,182.40,179.90,'Momentum','Chased the move. Stopped out fast.'],
@@ -384,45 +430,136 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
     ['09 Nov 15:00','09 Nov 15:50','SOL/USDT','Buy',20,184.0,181.6,'Momentum','Small size, small loss.'],
     ['10 Nov 10:30','10 Nov 13:15','ETH/USDT','Sell',1.8,3560,3497,'Range fade','Clean rejection at 3,560.']
   ];
+  const T_FAIL = [
+    ['02 Nov 10:05','02 Nov 12:30','BTC/USDT','Buy',0.05,68420,69180,'Breakout retest','Good start, small size.'],
+    ['03 Nov 09:40','03 Nov 13:10','ETH/USDT','Buy',0.8,3480,3530,'Trend pullback','Followed the plan.'],
+    ['03 Nov 16:20','03 Nov 17:05','SOL/USDT','Sell',10,184.0,186.5,'Momentum','Shorted too early.'],
+    ['04 Nov 11:15','04 Nov 14:40','BTC/USDT','Sell',0.06,69900,69400,'Range fade','Rejection at the range high.'],
+    ['05 Nov 20:30','05 Nov 22:10','ETH/USDT','Sell',1.0,3500,3534,'News','Faded the news spike. Wrong call.'],
+    ['06 Nov 10:00','06 Nov 15:45','SOL/USDT','Buy',15,182.0,185.4,'Trend pullback','Clean bounce off support.'],
+    ['07 Nov 13:20','07 Nov 16:00','ZEC/USDT','Buy',2,1240,1218,'Breakout retest','Breakout failed. Held too long.'],
+    ['09 Nov 09:30','09 Nov 11:05','BTC/USDT','Buy',0.08,70100,69420,'Momentum','Bought the top of a fast move.'],
+    ['09 Nov 11:20','09 Nov 12:40','ETH/USDT','Buy',1.2,3470,3388,'Revenge trade','Doubled size to win it back. Hit the daily loss limit.']
+  ];
   const $ = id => document.getElementById(id);
   const money = n => (n<0?'−':'') + '$' + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   const sgn = n => (n>0?'+':'') + money(n);
   const price = n => n.toLocaleString('en-US',{maximumFractionDigits:2});
-
-  const trades = T.map(t => {
+  const usd0 = n => '$' + n.toLocaleString('en-US');
+  const mk = T => T.map(t => {
     const pnl = +(t[3]==='Buy' ? t[4]*(t[6]-t[5]) : t[4]*(t[5]-t[6])).toFixed(2);
     return {open:t[0],close:t[1],pair:t[2],side:t[3],size:t[4],entry:t[5],exit:t[6],setup:t[7],note:t[8],pnl,day:t[1].slice(0,6)};
   });
-  let bal = START; const curve=[{label:'Start',b:START}]; let minBal=START;
-  trades.forEach(t=>{ bal=+(bal+t.pnl).toFixed(2); curve.push({label:t.close,b:bal}); minBal=Math.min(minBal,bal); });
-  const profit = bal-START;
+  const ACC = {
+    main:   {id:'#FX-20419', size:10000, trades:mk(T_MAIN), status:'funded'},
+    failed: {id:'#FX-20388', size:5000,  trades:mk(T_FAIL), status:'failed', failedOn:'09 Nov', resetPrice:162}
+  };
+  function stats(a){
+    let bal=a.size, minBal=a.size; const curve=[a.size];
+    a.trades.forEach(t=>{ bal=+(bal+t.pnl).toFixed(2); curve.push(bal); minBal=Math.min(minBal,bal); });
+    const days={}; a.trades.forEach(t=>{days[t.day]=(days[t.day]||0)+t.pnl;});
+    const worst=Math.min(0,...Object.values(days));
+    const out={bal, minBal, curve, days, worst, endLabel:a.trades[a.trades.length-1].day};
+    if(a.status==='reset'){ out.bal=a.size; out.minBal=a.size; out.curve=curve.concat([a.size]); out.worst=0; out.days={}; out.endLabel='11 Nov'; }
+    out.profit=out.bal-a.size;
+    return out;
+  }
+  let cur='main';
 
-  // daily
-  const days={}; trades.forEach(t=>{days[t.day]=(days[t.day]||0)+t.pnl;});
-  const worst=Math.min(0,...Object.values(days));
+  // rules + payout pages always describe the main funded account
+  const MS=stats(ACC.main), mBuf=ACC.main.size*0.01, mAvail=Math.max(0,MS.profit-mBuf);
+  $('r3').textContent='Total profit '+money(MS.profit)+' of $3,000 needed ('+(MS.profit/3000*100).toFixed(0)+'%).';
+  $('r3bar').style.width=Math.min(100,MS.profit/3000*100).toFixed(1)+'%';
+  $('fpEx').textContent='Today: '+money(MS.profit)+' profit − $100 buffer = '+money(mAvail)+' to withdraw → '+money(mAvail*0.7)+' to the trader.';
 
-  $('tBal').textContent=money(bal); $('tEq').textContent=money(bal);
-  $('tProf').textContent=sgn(profit)+' ('+(profit/START*100).toFixed(2)+'%)';
-  const BUF=START*0.01, avail=Math.max(0,profit-BUF);
-  $('iAvail').textContent=money(avail); $('iShare').textContent=money(avail*0.7);
   const barColor=f=>f>=0.8?'var(--bad)':f>=0.5?'var(--warn)':'var(--good)';
   const setUse=(id,used,lim)=>{const f=Math.max(0,used)/lim, s=$(id);
     s.style.width=(Math.min(1,f)*100).toFixed(1)+'%'; s.style.background=barColor(f);
-    $(id+'T').textContent=money(-Math.max(0,used))+' / $'+lim;};
-  // drawdown now: today (11 Nov) and current balance below start
-  setUse('cDay', -(days['11 Nov']||0), 300);
-  setUse('cMax', START-bal, 600);
-  // record: worst day and lowest balance so far
-  setUse('uDay', -worst, 300);
-  setUse('uMax', START-minBal, 600);
-  $('r3').textContent='Total profit '+money(profit)+' of $3,000 needed ('+(profit/3000*100).toFixed(0)+'%).';
-  $('r3bar').style.width=Math.min(100,profit/3000*100).toFixed(1)+'%';
-  $('fpEx').textContent='Today: '+money(profit)+' profit − $100 buffer = '+money(avail)+' to withdraw → '+money(avail*0.7)+' to the trader.';
+    $(id+'T').textContent=money(-Math.max(0,used))+' / '+usd0(lim);};
+  const row=(k,v,cls)=>'<div class="row"><dt>'+k+'</dt><dd'+(cls?' class="'+cls+'"':'')+'>'+v+'</dd></div>';
+
+  function renderOverview(){
+    const a=ACC[cur], s=stats(a), daily=a.size*0.03, maxL=a.size*0.06;
+    $('tBal').textContent=money(s.bal); $('tEq').textContent=money(s.bal);
+    const tp=$('tProf'); tp.textContent=sgn(s.profit)+' ('+(s.profit/a.size*100).toFixed(2)+'%)'; tp.className=s.profit>0?'pos':s.profit<0?'neg':'';
+    let h='';
+    if(a.status==='failed'){
+      const breachDay=s.days[a.failedOn]||0;
+      h+=row('Status','<span class="badge bad">Failed · Breached</span>');
+      h+=row('Mode','New Mode')+row('Account size',money(a.size),'mono')+row('Funded since','02/11/26','mono');
+      h+=row('Failed on','09/11/26 · 12:40','mono');
+      h+=row('Reason','Max daily loss ('+money(breachDay)+' / '+usd0(daily)+')','neg');
+      h+=row('Final balance',money(s.bal),'mono');
+      h+=row('Reset offer','<span class="mono">'+a.resetPrice+' USDT</span> until 12 Nov, 21:40','warn-txt');
+    } else {
+      h+=row('Status', a.status==='reset' ? '<span class="badge ok">Funded · Reset</span>' : '<span class="badge ok">Funded · Active</span>');
+      h+=row('Mode','New Mode')+row('Account size',money(a.size),'mono');
+      h+= a.status==='reset' ? row('Restarted','11/11/26','mono') : row('Funded since','02/11/26','mono');
+      const buf=a.size*0.01, avail=Math.max(0,s.profit-buf);
+      h+=row('Profit share','70%')+row('Payouts made','0','mono')+row('Buffer kept (1%)',money(buf),'mono');
+      h+=row('Available to withdraw',money(avail),'mono pos')+row('Your share (70%)',money(avail*0.7),'mono');
+    }
+    $('info').innerHTML=h;
+
+    // objectives
+    const lastDay = a.status==='failed' ? (s.days[a.failedOn]||0) : (s.days['11 Nov']||0);
+    setUse('cDay', -lastDay, daily);
+    setUse('cMax', a.size-s.bal, maxL);
+    setUse('uDay', -s.worst, daily);
+    setUse('uMax', a.size-s.minBal, maxL);
+    $('oDayL').textContent='Max daily loss · 3%'; $('oMaxL').textContent='Maximum loss · 6%';
+    if(a.status==='failed'){
+      $('oDayS').textContent='Breached'; $('oDayS').className='badge bad';
+      $('oMaxS').textContent='Closed'; $('oMaxS').className='badge wait';
+    } else {
+      $('oDayS').textContent='Active'; $('oDayS').className='badge ok';
+      $('oMaxS').textContent='Active'; $('oMaxS').className='badge ok';
+    }
+
+    // chart
+    const START=a.size, FLOOR=a.size-maxL, curve=s.curve, bal=s.bal;
+    const col = a.status==='failed' ? 'var(--bad)' : 'var(--good)';
+    const W=760,H=320,pL=74,pR=16,pT=16,pB=34;
+    const vals=curve.concat([FLOOR,START]);
+    let lo=Math.min(...vals),hi=Math.max(...vals); const sp=hi-lo; lo-=sp*0.08; hi+=sp*0.08;
+    const n=curve.length-1;
+    const x=i=>pL+(W-pL-pR)*i/n, y=v=>pT+(H-pT-pB)*(1-(v-lo)/(hi-lo));
+    const font='font-family="Inter, system-ui, sans-serif" font-size="11" font-variant-numeric="tabular-nums"';
+    let g='';
+    const step=Math.max(50,Math.ceil((hi-lo)/5/50)*50);
+    for(let v=Math.ceil(lo/step)*step; v<=hi; v+=step){ const yy=y(v).toFixed(1);
+      g+='<line x1="'+pL+'" x2="'+(W-pR)+'" y1="'+yy+'" y2="'+yy+'" style="stroke:var(--line-soft)"/>';
+      g+='<text x="'+(pL-8)+'" y="'+(+yy+4)+'" text-anchor="end" style="fill:var(--dim)" '+font+'>$'+v.toLocaleString('en-US')+'</text>'; }
+    const ref=(v,c,lab)=>{const yy=y(v).toFixed(1);
+      return '<line x1="'+pL+'" x2="'+(W-pR)+'" y1="'+yy+'" y2="'+yy+'" style="stroke:'+c+'" stroke-width="1.4" stroke-dasharray="5 5"/>'+
+        '<text x="'+(W-pR-4)+'" y="'+(+yy-6)+'" text-anchor="end" style="fill:'+c+'" '+font+'>'+lab+'</text>';};
+    g+=ref(START,'var(--muted)','Account size '+usd0(START));
+    g+=ref(FLOOR,'var(--bad)','Max-loss floor '+usd0(FLOOR));
+    const pts=curve.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1));
+    const baseY=y(START).toFixed(1);
+    g+='<defs><linearGradient id="ga" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style="stop-color:'+col+'" stop-opacity=".3"/><stop offset="1" style="stop-color:'+col+'" stop-opacity=".04"/></linearGradient></defs>';
+    g+='<path d="M'+x(0).toFixed(1)+','+baseY+' L'+pts.join(' L')+' L'+x(n).toFixed(1)+','+baseY+' Z" fill="url(#ga)"/>';
+    g+='<polyline points="'+pts.join(' ')+'" fill="none" style="stroke:'+col+'" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
+    g+='<circle cx="'+x(n).toFixed(1)+'" cy="'+y(bal).toFixed(1)+'" r="8" style="fill:'+col+'" fill-opacity=".2"/><circle cx="'+x(n).toFixed(1)+'" cy="'+y(bal).toFixed(1)+'" r="4" style="fill:'+col+'"/>';
+    if(a.status==='failed') g+='<text x="'+(x(n)-12).toFixed(1)+'" y="'+(y(bal)-12).toFixed(1)+'" text-anchor="end" style="fill:var(--bad)" font-weight="600" '+font+'>Breached 09 Nov</text>';
+    if(a.status==='reset') g+='<text x="'+(x(n)-12).toFixed(1)+'" y="'+(y(bal)-12).toFixed(1)+'" text-anchor="end" style="fill:var(--good)" font-weight="600" '+font+'>Reset 11 Nov</text>';
+    g+='<text x="'+pL+'" y="'+(H-10)+'" style="fill:var(--dim)" '+font+'>02 Nov</text>';
+    g+='<text x="'+(W-pR)+'" y="'+(H-10)+'" text-anchor="end" style="fill:var(--dim)" '+font+'>'+s.endLabel+'</text>';
+    $('chart').innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Balance after each trade, from '+usd0(START)+' to '+money(bal)+'">'+g+'</svg>';
+
+    // journal
+    byDay={}; a.trades.forEach(t=>{const d=parseInt(t.close,10);(byDay[d]=byDay[d]||[]).push(t);});
+    sel=parseInt(a.trades[a.trades.length-1].close,10);
+    vy=DATA_Y; vm=DATA_M; renderCal();
+
+    // which account is selected
+    $('mainAcct').classList.toggle('sel',cur==='main');
+    $('failedAcct').classList.toggle('sel',cur==='failed');
+  }
 
   // journal calendar (all sample trades are in November 2026)
   const DATA_Y=2026, DATA_M=10, TODAY=11;
-  const byDay={}; trades.forEach(t=>{const d=parseInt(t.close,10);(byDay[d]=byDay[d]||[]).push(t);});
-  let vy=DATA_Y, vm=DATA_M, sel=10;
+  let byDay={}, vy=DATA_Y, vm=DATA_M, sel=10;
   const sum=a=>a.reduce((s,t)=>s+t.pnl,0);
 
   function renderCal(){
@@ -464,34 +601,37 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
   $('calPrev').addEventListener('click',()=>{vm--; if(vm<0){vm=11;vy--;} renderCal();});
   $('calNext').addEventListener('click',()=>{vm++; if(vm>11){vm=0;vy++;} renderCal();});
   $('calToday').addEventListener('click',()=>{vy=DATA_Y; vm=DATA_M; renderCal();});
-  renderCal();
 
-  // chart
-  const W=760,H=320,pL=74,pR=16,pT=16,pB=34;
-  const vals=curve.map(p=>p.b).concat([FLOOR,START]);
-  let lo=Math.min(...vals),hi=Math.max(...vals); const sp=hi-lo; lo-=sp*0.08; hi+=sp*0.08;
-  const n=curve.length-1;
-  const x=i=>pL+(W-pL-pR)*i/n, y=v=>pT+(H-pT-pB)*(1-(v-lo)/(hi-lo));
-  const font='font-family="Inter, system-ui, sans-serif" font-size="11" font-variant-numeric="tabular-nums"';
-  let g='';
-  const step=Math.ceil((hi-lo)/5/100)*100;
-  for(let v=Math.ceil(lo/step)*step; v<=hi; v+=step){ const yy=y(v).toFixed(1);
-    g+='<line x1="'+pL+'" x2="'+(W-pR)+'" y1="'+yy+'" y2="'+yy+'" style="stroke:var(--line-soft)"/>';
-    g+='<text x="'+(pL-8)+'" y="'+(+yy+4)+'" text-anchor="end" style="fill:var(--dim)" '+font+'>$'+v.toLocaleString('en-US')+'</text>'; }
-  const ref=(v,c,lab)=>{const yy=y(v).toFixed(1);
-    return '<line x1="'+pL+'" x2="'+(W-pR)+'" y1="'+yy+'" y2="'+yy+'" style="stroke:'+c+'" stroke-width="1.4" stroke-dasharray="5 5"/>'+
-      '<text x="'+(W-pR-4)+'" y="'+(+yy-6)+'" text-anchor="end" style="fill:'+c+'" '+font+'>'+lab+'</text>';};
-  g+=ref(START,'var(--muted)','Account size $10,000');
-  g+=ref(FLOOR,'var(--bad)','Max-loss floor $9,400');
-  const pts=curve.map((p,i)=>x(i).toFixed(1)+','+y(p.b).toFixed(1));
-  const baseY=y(START).toFixed(1);
-  g+='<defs><linearGradient id="ga" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style="stop-color:var(--good)" stop-opacity=".35"/><stop offset="1" style="stop-color:var(--good)" stop-opacity=".04"/></linearGradient></defs>';
-  g+='<path d="M'+x(0).toFixed(1)+','+baseY+' L'+pts.join(' L')+' L'+x(n).toFixed(1)+','+baseY+' Z" fill="url(#ga)"/>';
-  g+='<polyline points="'+pts.join(' ')+'" fill="none" style="stroke:var(--good)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
-  g+='<circle cx="'+x(n).toFixed(1)+'" cy="'+y(bal).toFixed(1)+'" r="8" style="fill:var(--good)" fill-opacity=".2"/><circle cx="'+x(n).toFixed(1)+'" cy="'+y(bal).toFixed(1)+'" r="4" style="fill:var(--good)"/>';
-  g+='<text x="'+pL+'" y="'+(H-10)+'" style="fill:var(--dim)" '+font+'>02 Nov</text>';
-  g+='<text x="'+(W-pR)+'" y="'+(H-10)+'" text-anchor="end" style="fill:var(--dim)" '+font+'>10 Nov</text>';
-  $('chart').innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Balance after each trade, from $10,000 to '+money(bal)+'">'+g+'</svg>';
+  // switch account by clicking it in the top bar
+  document.querySelectorAll('[data-acct]').forEach(el=>el.addEventListener('click',()=>{
+    cur=el.dataset.acct; renderOverview();
+    if(location.hash && location.hash!=='#overview') location.hash='overview';
+  }));
+  renderOverview();
+
+  // failed account: reset at 10% off
+  const dlg=$('resetDlg');
+  const closeDlg=()=>{ dlg.hidden=true; if(!$('resetBtn').hidden) $('resetBtn').focus(); };
+  $('resetBtn').addEventListener('click',()=>{ $('rdForm').hidden=false; $('rdDone').hidden=true; dlg.hidden=false; $('rdPay').focus(); });
+  $('rdCancel').addEventListener('click',closeDlg);
+  $('rdClose').addEventListener('click',closeDlg);
+  dlg.addEventListener('click',e=>{ if(e.target===dlg) closeDlg(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !dlg.hidden) closeDlg(); });
+  $('rdPay').addEventListener('click',()=>{
+    $('rdForm').hidden=true; $('rdDone').hidden=false; $('rdClose').focus();
+    $('fBadge').textContent='Reset · Funded'; $('fBadge').className='badge ok';
+    $('fSub').textContent='#FX-20388 · Restarted 11 Nov · benefits reset';
+    $('resetBtn').hidden=true; $('failedAcct').classList.remove('failed');
+    $('fIcon').classList.remove('bad');
+    ACC.failed.status='reset'; cur='failed'; renderOverview();
+  });
+  // demo: click the account icon to put it back to failed and try the reset again
+  $('fIcon').addEventListener('click',()=>{
+    $('fBadge').textContent='Failed'; $('fBadge').className='badge bad';
+    $('fSub').textContent='#FX-20388 · Max daily loss hit 09 Nov';
+    $('resetBtn').hidden=false; $('failedAcct').classList.add('failed'); $('fIcon').classList.add('bad');
+    ACC.failed.status='failed'; cur='failed'; renderOverview();
+  });
 
   // light / dark mode (remembered per viewer)
   function setMode(m){
